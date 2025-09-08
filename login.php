@@ -27,7 +27,7 @@ if ($auth->isLoggedIn()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - S3 Sync</title>
+    <title>Login - OREN S3 Manager</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
@@ -40,7 +40,7 @@ if ($auth->isLoggedIn()) {
 </head>
 <body>
     <div class="login-container">
-        <h2>S3 Sync Login</h2>
+        <h2>OREN S3 Manager</h2>
         <?php if ($error): ?>
             <div class="error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>

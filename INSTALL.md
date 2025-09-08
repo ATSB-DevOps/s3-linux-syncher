@@ -320,7 +320,7 @@ Add HTTP Basic Authentication:
 ```apache
 <Directory /path/to/s3-local-sync-wsg>
     AuthType Basic
-    AuthName "S3 Sync Admin"
+    AuthName "OREN S3 Manager Admin"
     AuthUserFile /etc/apache2/.htpasswd
     Require valid-user
 </Directory>

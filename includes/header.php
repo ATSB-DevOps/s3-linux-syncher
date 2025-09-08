@@ -15,7 +15,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S3 Sync Manager</title>
+    <title>OREN S3 Manager</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; }
@@ -58,7 +58,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 <body>
     <nav class="navbar">
         <div>
-            <span style="font-size: 1.25rem; font-weight: bold;">S3 Sync Manager</span>
+            <span style="font-size: 1.25rem; font-weight: bold;">OREN S3 Manager</span>
             <a href="<?= appUrl('index.php') ?>" class="<?= $currentPage === 'index' ? 'active' : '' ?>">Dashboard</a>
             <a href="<?= appUrl('sync.php') ?>" class="<?= $currentPage === 'sync' ? 'active' : '' ?>">New Sync</a>
             <a href="<?= appUrl('jobs.php') ?>" class="<?= $currentPage === 'jobs' ? 'active' : '' ?>">Jobs</a>

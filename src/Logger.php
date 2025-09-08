@@ -63,7 +63,7 @@ class Logger {
         
         // Also log to system log for errors
         if ($level <= self::WARNING) {
-            error_log("S3 Sync {$levelName}: {$message}");
+            error_log("OREN S3 Manager {$levelName}: {$message}");
         }
     }
     

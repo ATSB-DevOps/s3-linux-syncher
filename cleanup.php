@@ -1,6 +1,6 @@
 <?php
 /**
- * S3 Sync Cleanup Script
+ * OREN S3 Manager Cleanup Script
  * Run this script periodically to maintain the application
  */
 
@@ -14,7 +14,7 @@ if (php_sapi_name() !== 'cli') {
 }
 
 $config = require __DIR__ . '/config/config.php';
-echo "[" . date('Y-m-d H:i:s') . "] Starting S3 Sync cleanup...\n";
+echo "[" . date('Y-m-d H:i:s') . "] Starting OREN S3 Manager cleanup...\n";
 
 // Initialize components
 $db = (new Database())->getConnection();
@@ -65,7 +65,7 @@ echo "Disk usage: {$usedPercent}%\n";
 if ($usedPercent > 90) {
     echo "WARNING: Disk usage is high ({$usedPercent}%)\n";
     // Log to system
-    error_log("S3 Sync: High disk usage detected ({$usedPercent}%)");
+    error_log("OREN S3 Manager: High disk usage detected ({$usedPercent}%)");
 }
 
 // 6. Check for failed jobs needing attention
@@ -74,7 +74,7 @@ $recentFailures = $stmt->fetchColumn();
 
 if ($recentFailures > 5) {
     echo "WARNING: {$recentFailures} jobs failed in the last 24 hours\n";
-    error_log("S3 Sync: High failure rate detected ({$recentFailures} failed jobs in 24h)");
+    error_log("OREN S3 Manager: High failure rate detected ({$recentFailures} failed jobs in 24h)");
 }
 
 // 7. Performance statistics

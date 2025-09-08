@@ -19,7 +19,7 @@ return [
     'lockout_duration' => 900, // 15 minutes in seconds
     
     // Application settings
-    'app_name' => 'S3 Sync Manager',
+    'app_name' => 'OREN S3 Manager',
     'app_version' => '0.1.0',
     'timezone' => 'UTC',
     'debug_mode' => false,

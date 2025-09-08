@@ -1,4 +1,4 @@
-# S3 Sync Manager - Production Deployment Guide
+# OREN S3 Manager - Production Deployment Guide
 
 ## System Requirements
 

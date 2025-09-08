@@ -1,6 +1,8 @@
-# S3 Sync Manager
+# OREN S3 Manager
 
 A powerful, production-ready PHP web application for synchronizing local files and directories to S3-compatible storage services.
+
+© ORENCloud Sdn Bhd | For WSG
 
 ## 🌟 Features
 
