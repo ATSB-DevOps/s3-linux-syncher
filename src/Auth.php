@@ -65,8 +65,9 @@ class Auth {
     
     public function requireAuth() {
         if (!$this->isLoggedIn()) {
-            header('Location: /login.php');
-            exit;
+            // Include path helper for subdirectory support
+            require_once __DIR__ . '/../includes/path_helper.php';
+            appRedirect('login.php');
         }
     }
     

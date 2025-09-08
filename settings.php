@@ -137,7 +137,7 @@ if (!empty($formData)) {
         <button type="submit" class="btn btn-primary">Save Settings</button>
         <button type="submit" class="btn btn-secondary" onclick="this.form.action.value='test'">Test Connection</button>
         <?php if ($editSettings): ?>
-            <a href="/settings.php" class="btn btn-secondary">Cancel</a>
+                <a href="<?= appUrl('settings.php') ?>" class="btn btn-secondary">Cancel</a>
         <?php endif; ?>
     </form>
 </div>

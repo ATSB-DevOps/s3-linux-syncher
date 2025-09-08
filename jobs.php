@@ -87,7 +87,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="/job-details.php?id=<?= $job['id'] ?>" class="btn btn-primary">View</a>
+                            <a href="<?= appUrl('job-details.php?id=' . $job['id']) ?>" class="btn btn-primary">View</a>
                             
                             <?php if ($job['status'] === 'running'): ?>
                                 <button onclick="controlJob(<?= $job['id'] ?>, 'pause')" class="btn btn-secondary">Pause</button>
@@ -96,7 +96,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <button onclick="controlJob(<?= $job['id'] ?>, 'resume')" class="btn btn-success">Resume</button>
                                 <button onclick="controlJob(<?= $job['id'] ?>, 'stop')" class="btn btn-danger">Stop</button>
                             <?php elseif ($job['status'] === 'failed' || $job['status'] === 'completed' || $job['status'] === 'stopped'): ?>
-                                <form method="POST" action="/retry-job.php" style="display: inline;">
+                                <form method="POST" action="<?= appUrl('retry-job.php') ?>" style="display: inline;">
                                     <input type="hidden" name="job_id" value="<?= $job['id'] ?>">
                                     <button type="submit" class="btn btn-secondary">Retry</button>
                                 </form>
@@ -116,6 +116,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <script>
+const basePath = '<?= appUrl('') ?>';
 function controlJob(jobId, action) {
     const actionText = action.charAt(0).toUpperCase() + action.slice(1);
     
@@ -130,7 +131,7 @@ function controlJob(jobId, action) {
     button.disabled = true;
     button.textContent = `${actionText}ing...`;
     
-    fetch('/api/job-control.php', {
+    fetch(basePath + '/api/job-control.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -176,7 +177,7 @@ function deleteJob(jobId) {
     button.disabled = true;
     button.textContent = 'Deleting...';
     
-    fetch('/api/delete-job.php', {
+    fetch(basePath + '/api/delete-job.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

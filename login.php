@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/includes/path_helper.php';
 
 use S3Sync\Auth;
 
@@ -11,16 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     
     if ($auth->login($username, $password)) {
-        header('Location: /index.php');
-        exit;
+        appRedirect('index.php');
     } else {
         $error = 'Invalid username or password';
     }
 }
 
 if ($auth->isLoggedIn()) {
-    header('Location: /index.php');
-    exit;
+    appRedirect('index.php');
 }
 ?>
 <!DOCTYPE html>

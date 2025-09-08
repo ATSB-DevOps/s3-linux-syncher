@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/path_helper.php';
 
 use S3Sync\Auth;
 
@@ -58,15 +59,15 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
     <nav class="navbar">
         <div>
             <span style="font-size: 1.25rem; font-weight: bold;">S3 Sync Manager</span>
-            <a href="/index.php" class="<?= $currentPage === 'index' ? 'active' : '' ?>">Dashboard</a>
-            <a href="/sync.php" class="<?= $currentPage === 'sync' ? 'active' : '' ?>">New Sync</a>
-            <a href="/jobs.php" class="<?= $currentPage === 'jobs' ? 'active' : '' ?>">Jobs</a>
-            <a href="/scheduled.php" class="<?= $currentPage === 'scheduled' ? 'active' : '' ?>">Scheduled</a>
-            <a href="/settings.php" class="<?= $currentPage === 'settings' ? 'active' : '' ?>">S3 Settings</a>
+            <a href="<?= appUrl('index.php') ?>" class="<?= $currentPage === 'index' ? 'active' : '' ?>">Dashboard</a>
+            <a href="<?= appUrl('sync.php') ?>" class="<?= $currentPage === 'sync' ? 'active' : '' ?>">New Sync</a>
+            <a href="<?= appUrl('jobs.php') ?>" class="<?= $currentPage === 'jobs' ? 'active' : '' ?>">Jobs</a>
+            <a href="<?= appUrl('scheduled.php') ?>" class="<?= $currentPage === 'scheduled' ? 'active' : '' ?>">Scheduled</a>
+            <a href="<?= appUrl('settings.php') ?>" class="<?= $currentPage === 'settings' ? 'active' : '' ?>">S3 Settings</a>
         </div>
         <div>
             <span>Welcome, <?= htmlspecialchars($currentUser['username']) ?></span>
-            <a href="/logout.php">Logout</a>
+            <a href="<?= appUrl('logout.php') ?>">Logout</a>
         </div>
     </nav>
     <div class="container">

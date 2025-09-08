@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $activeSettings) {
 
 <?php if (!$activeSettings): ?>
     <div class="alert alert-danger">
-        Please <a href="/settings.php">configure and activate S3 settings</a> before creating sync jobs.
+        Please <a href="<?= appUrl('settings.php') ?>">configure and activate S3 settings</a> before creating sync jobs.
     </div>
 <?php else: ?>
     <div class="card">
@@ -217,7 +217,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $activeSettings) {
     
     function browseFolders(path = '/') {
         currentPath = path;
-        fetch('/api/browse.php?path=' + encodeURIComponent(path))
+        const basePath = '<?= appUrl('') ?>';
+        fetch(basePath + '/api/browse.php?path=' + encodeURIComponent(path))
             .then(response => response.json())
             .then(data => {
                 document.getElementById('current-path').innerHTML = '<strong>Current Path:</strong> ' + data.current;

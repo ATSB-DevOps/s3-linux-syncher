@@ -36,7 +36,7 @@ $activeSettings = $s3Manager->getActiveSettings();
         </div>
     <?php else: ?>
         <div class="alert alert-danger">
-            No active S3 configuration. Please <a href="/settings.php">configure S3 settings</a>.
+            No active S3 configuration. Please <a href="<?= appUrl('settings.php') ?>">configure S3 settings</a>.
         </div>
     <?php endif; ?>
 </div>
@@ -89,7 +89,7 @@ $activeSettings = $s3Manager->getActiveSettings();
                         </td>
                         <td><?= date('Y-m-d H:i', strtotime($job['created_at'])) ?></td>
                         <td>
-                            <a href="/job-details.php?id=<?= $job['id'] ?>" class="btn btn-primary">View</a>
+                            <a href="<?= appUrl('job-details.php?id=' . $job['id']) ?>" class="btn btn-primary">View</a>
                             
                             <?php if ($job['status'] === 'running'): ?>
                                 <button onclick="controlJob(<?= $job['id'] ?>, 'pause')" class="btn btn-secondary">Pause</button>
@@ -107,11 +107,12 @@ $activeSettings = $s3Manager->getActiveSettings();
             </tbody>
         </table>
     <?php else: ?>
-        <p>No jobs yet. <a href="/sync.php">Create your first sync job</a>.</p>
+        <p>No jobs yet. <a href="<?= appUrl('sync.php') ?>">Create your first sync job</a>.</p>
     <?php endif; ?>
 </div>
 
 <script>
+const basePath = '<?= appUrl('') ?>';
 function controlJob(jobId, action) {
     const actionText = action.charAt(0).toUpperCase() + action.slice(1);
     
@@ -126,7 +127,7 @@ function controlJob(jobId, action) {
     button.disabled = true;
     button.textContent = `${actionText}ing...`;
     
-    fetch('/api/job-control.php', {
+    fetch(basePath + '/api/job-control.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -164,7 +165,7 @@ function deleteJob(jobId) {
     button.disabled = true;
     button.textContent = 'Deleting...';
     
-    fetch('/api/delete-job.php', {
+    fetch(basePath + '/api/delete-job.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

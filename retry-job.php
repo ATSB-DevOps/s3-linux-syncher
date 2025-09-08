@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/includes/path_helper.php';
 
 use S3Sync\Auth;
 use S3Sync\Database;
@@ -8,8 +9,7 @@ $auth = new Auth();
 $auth->requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /jobs.php');
-    exit;
+    appRedirect('jobs.php');
 }
 
 $jobId = $_POST['job_id'] ?? 0;
@@ -39,8 +39,7 @@ if ($originalJob) {
     $workerPath = __DIR__ . '/worker.php';
     exec("$phpPath $workerPath $newJobId > /dev/null 2>&1 &");
     
-    header('Location: /job-details.php?id=' . $newJobId);
+    appRedirect('job-details.php?id=' . $newJobId);
 } else {
-    header('Location: /jobs.php');
+    appRedirect('jobs.php');
 }
-exit;

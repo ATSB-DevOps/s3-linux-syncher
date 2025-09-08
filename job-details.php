@@ -128,7 +128,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </table>
     
     <?php if ($job['status'] === 'failed' || $job['status'] === 'completed'): ?>
-        <form method="POST" action="/retry-job.php" style="margin-top: 1rem;">
+        <form method="POST" action="<?= appUrl('retry-job.php') ?>" style="margin-top: 1rem;">
             <input type="hidden" name="job_id" value="<?= $job['id'] ?>">
             <button type="submit" class="btn btn-primary">Retry This Job</button>
         </form>
