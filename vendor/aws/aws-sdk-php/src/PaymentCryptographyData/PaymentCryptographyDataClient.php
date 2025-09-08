@@ -13,8 +13,6 @@ use Aws\AwsClient;
  * @method \GuzzleHttp\Promise\Promise generateCardValidationDataAsync(array $args = [])
  * @method \Aws\Result generateMac(array $args = [])
  * @method \GuzzleHttp\Promise\Promise generateMacAsync(array $args = [])
- * @method \Aws\Result generateMacEmvPinChange(array $args = [])
- * @method \GuzzleHttp\Promise\Promise generateMacEmvPinChangeAsync(array $args = [])
  * @method \Aws\Result generatePinData(array $args = [])
  * @method \GuzzleHttp\Promise\Promise generatePinDataAsync(array $args = [])
  * @method \Aws\Result reEncryptData(array $args = [])

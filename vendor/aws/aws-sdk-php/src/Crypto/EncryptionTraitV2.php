@@ -152,7 +152,7 @@ trait EncryptionTraitV2
      * @param array $cipherOptions Options for use in determining the cipher to
      *                             be used for encrypting data.
      *
-     * @return array returns an array with two elements as follows: [string, AesStreamInterface]
+     * @return [AesStreamInterface, string]
      *
      * @internal
      */

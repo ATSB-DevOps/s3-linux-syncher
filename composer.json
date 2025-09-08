@@ -1,12 +1,18 @@
 {
     "name": "s3sync/web-app",
-    "description": "Simple S3 sync web application",
+    "description": "S3 Linux Syncher - Simple S3 sync web application",
     "require": {
-        "aws/aws-sdk-php": "^3.0"
+        "php": ">=7.4",
+        "aws/aws-sdk-php": "~3.281.0"
     },
     "autoload": {
         "psr-4": {
             "S3Sync\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.6"
         }
     }
 }

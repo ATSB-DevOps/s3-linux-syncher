@@ -48,11 +48,9 @@ class CredentialProvider
     const ENV_PROFILE = 'AWS_PROFILE';
     const ENV_ROLE_SESSION_NAME = 'AWS_ROLE_SESSION_NAME';
     const ENV_SECRET = 'AWS_SECRET_ACCESS_KEY';
-    const ENV_ACCOUNT_ID = 'AWS_ACCOUNT_ID';
     const ENV_SESSION = 'AWS_SESSION_TOKEN';
     const ENV_TOKEN_FILE = 'AWS_WEB_IDENTITY_TOKEN_FILE';
     const ENV_SHARED_CREDENTIALS_FILE = 'AWS_SHARED_CREDENTIALS_FILE';
-    public const REFRESH_WINDOW = 60;
 
     /**
      * Create a default credential provider that
@@ -225,14 +223,10 @@ class CredentialProvider
                         return $creds;
                     }
 
-                    // Check if credentials are expired or will expire in 1 minute
-                    $needsRefresh = $creds->getExpiration() - time() <= self::REFRESH_WINDOW;
-
-                    // Refresh if expired or expiring soon
-                    if (!$needsRefresh && !$creds->isExpired()) {
+                    // Refresh expired credentials.
+                    if (!$creds->isExpired()) {
                         return $creds;
                     }
-
                     // Refresh the result and forward the promise.
                     return $result = $provider($creds);
                 })
@@ -297,19 +291,9 @@ class CredentialProvider
             // Use credentials from environment variables, if available
             $key = getenv(self::ENV_KEY);
             $secret = getenv(self::ENV_SECRET);
-            $accountId = getenv(self::ENV_ACCOUNT_ID) ?: null;
-            $token = getenv(self::ENV_SESSION) ?: null;
-
             if ($key && $secret) {
                 return Promise\Create::promiseFor(
-                    new Credentials(
-                        $key,
-                        $secret,
-                        $token,
-                        null,
-                        $accountId,
-                        CredentialSources::ENVIRONMENT
-                    )
+                    new Credentials($key, $secret, getenv(self::ENV_SESSION) ?: NULL)
                 );
             }
 
@@ -423,8 +407,7 @@ class CredentialProvider
                     'WebIdentityTokenFile' => $tokenFromEnv,
                     'SessionName' => $sessionName,
                     'client' => $stsClient,
-                    'region' => $region,
-                    'source' => CredentialSources::ENVIRONMENT_STS_WEB_ID_TOKEN
+                    'region' => $region
                 ]);
 
                 return $provider();
@@ -453,8 +436,7 @@ class CredentialProvider
                         'WebIdentityTokenFile' => $profile['web_identity_token_file'],
                         'SessionName' => $sessionName,
                         'client' => $stsClient,
-                        'region' => $region,
-                        'source' => CredentialSources::PROFILE_STS_WEB_ID_TOKEN
+                        'region' => $region
                     ]);
 
                     return $provider();
@@ -559,10 +541,7 @@ class CredentialProvider
                 new Credentials(
                     $data[$profile]['aws_access_key_id'],
                     $data[$profile]['aws_secret_access_key'],
-                    $data[$profile]['aws_session_token'],
-                    null,
-                    $data[$profile]['aws_account_id'] ?? null,
-                    CredentialSources::PROFILE
+                    $data[$profile]['aws_session_token']
                 )
             );
         };
@@ -637,21 +616,12 @@ class CredentialProvider
                 $processData['SessionToken'] = null;
             }
 
-            $accountId = null;
-            if (!empty($processData['AccountId'])) {
-                $accountId = $processData['AccountId'];
-            } elseif (!empty($data[$profile]['aws_account_id'])) {
-                $accountId = $data[$profile]['aws_account_id'];
-            }
-
             return Promise\Create::promiseFor(
                 new Credentials(
                     $processData['AccessKeyId'],
                     $processData['SecretAccessKey'],
                     $processData['SessionToken'],
-                    $expires,
-                    $accountId,
-                    CredentialSources::PROFILE_PROCESS
+                    $expires
                 )
             );
         };
@@ -734,11 +704,8 @@ class CredentialProvider
             'RoleArn' => $roleArn,
             'RoleSessionName' => $roleSessionName
         ]);
-        $credentials = $stsClient->createCredentials(
-            $result,
-            CredentialSources::STS_ASSUME_ROLE
-        );
 
+        $credentials = $stsClient->createCredentials($result);
         return Promise\Create::promiseFor($credentials);
     }
 
@@ -924,17 +891,13 @@ class CredentialProvider
             $token->getToken(),
             $config
         );
-
-        //Expiration value is returned in epoch milliseconds. Conversion to seconds
-        $expiration = intdiv($ssoCredentials['expiration'], 1000);
+        $expiration = $ssoCredentials['expiration'];
         return Promise\Create::promiseFor(
             new Credentials(
                 $ssoCredentials['accessKeyId'],
                 $ssoCredentials['secretAccessKey'],
                 $ssoCredentials['sessionToken'],
-                $expiration,
-                $ssoProfile['sso_account_id'],
-                CredentialSources::PROFILE_SSO
+                $expiration
             )
         );
     }
@@ -993,9 +956,7 @@ class CredentialProvider
                 $ssoCredentials['accessKeyId'],
                 $ssoCredentials['secretAccessKey'],
                 $ssoCredentials['sessionToken'],
-                $expiration,
-                $ssoProfile['sso_account_id'],
-                CredentialSources::PROFILE_SSO_LEGACY
+                $expiration
             )
         );
     }
