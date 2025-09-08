@@ -3,6 +3,7 @@ namespace S3Sync;
 
 class Auth {
     private $db;
+    private $database;
     private $config;
     private $security;
     
@@ -17,7 +18,8 @@ class Auth {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $this->db = (new Database())->getConnection();
+        $this->database = new Database();
+        $this->db = $this->database->getConnection();
         
         // Check session timeout
         $this->checkSessionTimeout();
@@ -79,6 +81,45 @@ class Auth {
             ];
         }
         return null;
+    }
+    
+    public function changePassword($currentPassword, $newPassword) {
+        if (!$this->isLoggedIn()) {
+            return ['success' => false, 'message' => 'User not logged in'];
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        // Verify current password
+        $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if (!$user || !password_verify($currentPassword, $user['password'])) {
+            $this->security->logSecurityEvent('password_change_failed', [
+                'username' => $_SESSION['username'],
+                'reason' => 'invalid_current_password'
+            ]);
+            return ['success' => false, 'message' => 'Current password is incorrect'];
+        }
+        
+        // Validate new password
+        if (strlen($newPassword) < 8) {
+            return ['success' => false, 'message' => 'New password must be at least 8 characters long'];
+        }
+        
+        // Update password with retry logic
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->database->executeWithRetry(function() use ($hashedPassword, $userId) {
+            $stmt = $this->db->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$hashedPassword, $userId]);
+        });
+        
+        $this->security->logSecurityEvent('password_changed', [
+            'username' => $_SESSION['username']
+        ]);
+        
+        return ['success' => true, 'message' => 'Password changed successfully'];
     }
     
     private function checkSessionTimeout() {

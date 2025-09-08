@@ -67,6 +67,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
         </div>
         <div>
             <span>Welcome, <?= htmlspecialchars($currentUser['username']) ?></span>
+            <a href="<?= appUrl('change-password.php') ?>" class="<?= $currentPage === 'change-password' ? 'active' : '' ?>">Change Password</a>
             <a href="<?= appUrl('logout.php') ?>">Logout</a>
         </div>
     </nav>
