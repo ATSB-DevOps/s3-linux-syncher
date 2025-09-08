@@ -6,10 +6,12 @@ use Aws\Exception\AwsException;
 
 class S3Manager {
     private $db;
+    private $database;
     private $logger;
     
     public function __construct() {
-        $this->db = (new Database())->getConnection();
+        $this->database = new Database();
+        $this->db = $this->database->getConnection();
         $this->logger = new Logger();
     }
     
@@ -31,19 +33,21 @@ class S3Manager {
     
     public function saveSettings($data) {
         try {
-            $stmt = $this->db->prepare("INSERT INTO s3_settings (name, endpoint, region, access_key, secret_key, bucket) 
-                                        VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $data['name'],
-                $data['endpoint'] ?? null,
-                $data['region'],
-                $data['access_key'],
-                $data['secret_key'],
-                $data['bucket']
-            ]);
-            $id = $this->db->lastInsertId();
-            $this->logger->info('S3 settings saved', ['settings_id' => $id, 'name' => $data['name']]);
-            return $id;
+            return $this->database->executeWithRetry(function() use ($data) {
+                $stmt = $this->db->prepare("INSERT INTO s3_settings (name, endpoint, region, access_key, secret_key, bucket) 
+                                            VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([
+                    $data['name'],
+                    $data['endpoint'] ?? null,
+                    $data['region'],
+                    $data['access_key'],
+                    $data['secret_key'],
+                    $data['bucket']
+                ]);
+                $id = $this->db->lastInsertId();
+                $this->logger->info('S3 settings saved', ['settings_id' => $id, 'name' => $data['name']]);
+                return $id;
+            });
         } catch (\Exception $e) {
             $this->logger->logException($e, ['operation' => 'save_settings', 'name' => $data['name'] ?? 'unknown']);
             throw $e;
@@ -52,19 +56,21 @@ class S3Manager {
     
     public function updateSettings($id, $data) {
         try {
-            $stmt = $this->db->prepare("UPDATE s3_settings 
-                                        SET name = ?, endpoint = ?, region = ?, access_key = ?, secret_key = ?, bucket = ?, updated_at = CURRENT_TIMESTAMP 
-                                        WHERE id = ?");
-            $stmt->execute([
-                $data['name'],
-                $data['endpoint'] ?? null,
-                $data['region'],
-                $data['access_key'],
-                $data['secret_key'],
-                $data['bucket'],
-                $id
-            ]);
-            $this->logger->info('S3 settings updated', ['settings_id' => $id, 'name' => $data['name']]);
+            $this->database->executeWithRetry(function() use ($id, $data) {
+                $stmt = $this->db->prepare("UPDATE s3_settings 
+                                            SET name = ?, endpoint = ?, region = ?, access_key = ?, secret_key = ?, bucket = ?, updated_at = CURRENT_TIMESTAMP 
+                                            WHERE id = ?");
+                $stmt->execute([
+                    $data['name'],
+                    $data['endpoint'] ?? null,
+                    $data['region'],
+                    $data['access_key'],
+                    $data['secret_key'],
+                    $data['bucket'],
+                    $id
+                ]);
+                $this->logger->info('S3 settings updated', ['settings_id' => $id, 'name' => $data['name']]);
+            });
         } catch (\Exception $e) {
             $this->logger->logException($e, ['operation' => 'update_settings', 'settings_id' => $id]);
             throw $e;
@@ -73,10 +79,12 @@ class S3Manager {
     
     public function setActive($id) {
         try {
-            $this->db->exec("UPDATE s3_settings SET is_active = 0");
-            $stmt = $this->db->prepare("UPDATE s3_settings SET is_active = 1 WHERE id = ?");
-            $stmt->execute([$id]);
-            $this->logger->info('S3 settings activated', ['settings_id' => $id]);
+            $this->database->executeWithRetry(function() use ($id) {
+                $this->db->exec("UPDATE s3_settings SET is_active = 0");
+                $stmt = $this->db->prepare("UPDATE s3_settings SET is_active = 1 WHERE id = ?");
+                $stmt->execute([$id]);
+                $this->logger->info('S3 settings activated', ['settings_id' => $id]);
+            });
         } catch (\Exception $e) {
             $this->logger->logException($e, ['operation' => 'set_active_settings', 'settings_id' => $id]);
             throw $e;
@@ -84,8 +92,10 @@ class S3Manager {
     }
     
     public function deleteSettings($id) {
-        $stmt = $this->db->prepare("DELETE FROM s3_settings WHERE id = ?");
-        $stmt->execute([$id]);
+        $this->database->executeWithRetry(function() use ($id) {
+            $stmt = $this->db->prepare("DELETE FROM s3_settings WHERE id = ?");
+            $stmt->execute([$id]);
+        });
     }
     
     public function createS3Client($settings) {

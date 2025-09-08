@@ -20,6 +20,14 @@ class Database {
         
         $this->db = new \PDO('sqlite:' . $dbPath);
         $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        
+        // Configure SQLite for better concurrency
+        $this->db->exec('PRAGMA journal_mode=WAL');
+        $this->db->exec('PRAGMA synchronous=NORMAL');
+        $this->db->exec('PRAGMA cache_size=10000');
+        $this->db->exec('PRAGMA temp_store=MEMORY');
+        $this->db->exec('PRAGMA busy_timeout=5000');
+        
         $this->createTables();
         $this->runMigrations();
     }
@@ -185,5 +193,37 @@ class Database {
     
     public function getConnection() {
         return $this->db;
+    }
+    
+    /**
+     * Execute a database operation with retry logic for handling locks
+     */
+    public function executeWithRetry(callable $operation, int $maxRetries = 3, int $delayMs = 100) {
+        $attempt = 0;
+        $lastException = null;
+        
+        while ($attempt < $maxRetries) {
+            try {
+                return $operation();
+            } catch (\PDOException $e) {
+                $lastException = $e;
+                
+                // Check if it's a database lock error
+                if (strpos($e->getMessage(), 'database is locked') !== false || 
+                    strpos($e->getMessage(), 'SQLITE_BUSY') !== false) {
+                    $attempt++;
+                    if ($attempt < $maxRetries) {
+                        // Exponential backoff
+                        usleep($delayMs * 1000 * pow(2, $attempt - 1));
+                        continue;
+                    }
+                }
+                
+                // Re-throw non-lock exceptions immediately
+                throw $e;
+            }
+        }
+        
+        throw $lastException;
     }
 }

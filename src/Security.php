@@ -4,10 +4,12 @@ namespace S3Sync;
 class Security {
     private $config;
     private $db;
+    private $database;
     
     public function __construct() {
         $this->config = require __DIR__ . '/../config/config.php';
-        $this->db = (new Database())->getConnection();
+        $this->database = new Database();
+        $this->db = $this->database->getConnection();
         $this->initSecurityTables();
     }
     
@@ -37,8 +39,10 @@ class Security {
         $ipAddress = $ipAddress ?? $this->getClientIP();
         $userAgent = $userAgent ?? ($_SERVER['HTTP_USER_AGENT'] ?? '');
         
-        $stmt = $this->db->prepare("INSERT INTO login_attempts (ip_address, username, success, user_agent) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$ipAddress, $username, $success ? 1 : 0, $userAgent]);
+        $this->database->executeWithRetry(function() use ($ipAddress, $username, $success, $userAgent) {
+            $stmt = $this->db->prepare("INSERT INTO login_attempts (ip_address, username, success, user_agent) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$ipAddress, $username, $success ? 1 : 0, $userAgent]);
+        });
         
         // Clean old attempts
         $this->cleanOldLoginAttempts();
@@ -63,39 +67,41 @@ class Security {
     public function checkRateLimit($action, $limit, $window = 60, $ipAddress = null) {
         $ipAddress = $ipAddress ?? $this->getClientIP();
         
-        $stmt = $this->db->prepare("
-            SELECT count, window_start FROM rate_limits 
-            WHERE ip_address = ? AND action = ?
-        ");
-        $stmt->execute([$ipAddress, $action]);
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        if (!$result) {
-            // First request
-            $stmt = $this->db->prepare("INSERT INTO rate_limits (ip_address, action, count) VALUES (?, ?, 1)");
+        return $this->database->executeWithRetry(function() use ($action, $limit, $window, $ipAddress) {
+            $stmt = $this->db->prepare("
+                SELECT count, window_start FROM rate_limits 
+                WHERE ip_address = ? AND action = ?
+            ");
             $stmt->execute([$ipAddress, $action]);
-            return true;
-        }
-        
-        $windowStart = strtotime($result['window_start']);
-        $now = time();
-        
-        if ($now - $windowStart >= $window) {
-            // Reset window
-            $stmt = $this->db->prepare("UPDATE rate_limits SET count = 1, window_start = CURRENT_TIMESTAMP WHERE ip_address = ? AND action = ?");
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$result) {
+                // First request
+                $stmt = $this->db->prepare("INSERT INTO rate_limits (ip_address, action, count) VALUES (?, ?, 1)");
+                $stmt->execute([$ipAddress, $action]);
+                return true;
+            }
+            
+            $windowStart = strtotime($result['window_start']);
+            $now = time();
+            
+            if ($now - $windowStart >= $window) {
+                // Reset window
+                $stmt = $this->db->prepare("UPDATE rate_limits SET count = 1, window_start = CURRENT_TIMESTAMP WHERE ip_address = ? AND action = ?");
+                $stmt->execute([$ipAddress, $action]);
+                return true;
+            }
+            
+            if ($result['count'] >= $limit) {
+                return false;
+            }
+            
+            // Increment counter
+            $stmt = $this->db->prepare("UPDATE rate_limits SET count = count + 1 WHERE ip_address = ? AND action = ?");
             $stmt->execute([$ipAddress, $action]);
+            
             return true;
-        }
-        
-        if ($result['count'] >= $limit) {
-            return false;
-        }
-        
-        // Increment counter
-        $stmt = $this->db->prepare("UPDATE rate_limits SET count = count + 1 WHERE ip_address = ? AND action = ?");
-        $stmt->execute([$ipAddress, $action]);
-        
-        return true;
+        });
     }
     
     public function sanitizeFilePath($path) {

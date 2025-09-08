@@ -3,12 +3,14 @@ namespace S3Sync;
 
 class JobController {
     private $db;
+    private $database;
     private $config;
     private $logger;
     
     public function __construct() {
         $this->config = require __DIR__ . '/../config/config.php';
-        $this->db = (new Database())->getConnection();
+        $this->database = new Database();
+        $this->db = $this->database->getConnection();
         $this->logger = new Logger();
     }
     
@@ -70,12 +72,14 @@ class JobController {
         }
         
         // Update job status
-        $stmt = $this->db->prepare("UPDATE sync_jobs SET status = 'stopped', completed_at = CURRENT_TIMESTAMP, error_message = 'Job stopped by user' WHERE id = ?");
-        $stmt->execute([$jobId]);
-        
-        // Log the action
-        $stmt = $this->db->prepare("INSERT INTO job_logs (job_id, file_path, status, message) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$jobId, '', 'stopped', 'Job stopped by user request']);
+        $this->database->executeWithRetry(function() use ($jobId) {
+            $stmt = $this->db->prepare("UPDATE sync_jobs SET status = 'stopped', completed_at = CURRENT_TIMESTAMP, error_message = 'Job stopped by user' WHERE id = ?");
+            $stmt->execute([$jobId]);
+            
+            // Log the action
+            $stmt = $this->db->prepare("INSERT INTO job_logs (job_id, file_path, status, message) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$jobId, '', 'stopped', 'Job stopped by user request']);
+        });
         
         return ['success' => true, 'message' => 'Job stopped successfully'];
     }
@@ -254,22 +258,24 @@ class JobController {
                 return ['success' => false, 'message' => 'Cannot delete running or paused job. Stop it first.'];
             }
             
-            // Begin transaction
-            $this->db->beginTransaction();
-            
-            // Delete job logs
-            $stmt = $this->db->prepare("DELETE FROM job_logs WHERE job_id = ?");
-            $stmt->execute([$jobId]);
-            
-            // Delete job paths
-            $stmt = $this->db->prepare("DELETE FROM job_paths WHERE job_id = ?");
-            $stmt->execute([$jobId]);
-            
-            // Delete the job itself
-            $stmt = $this->db->prepare("DELETE FROM sync_jobs WHERE id = ?");
-            $stmt->execute([$jobId]);
-            
-            $this->db->commit();
+            // Delete job with transaction and retry logic
+            $this->database->executeWithRetry(function() use ($jobId) {
+                $this->db->beginTransaction();
+                
+                // Delete job logs
+                $stmt = $this->db->prepare("DELETE FROM job_logs WHERE job_id = ?");
+                $stmt->execute([$jobId]);
+                
+                // Delete job paths
+                $stmt = $this->db->prepare("DELETE FROM job_paths WHERE job_id = ?");
+                $stmt->execute([$jobId]);
+                
+                // Delete the job itself
+                $stmt = $this->db->prepare("DELETE FROM sync_jobs WHERE id = ?");
+                $stmt->execute([$jobId]);
+                
+                $this->db->commit();
+            });
             
             $this->logger->logJobEvent($jobId, 'deleted', [
                 'job_name' => $job['name'],
