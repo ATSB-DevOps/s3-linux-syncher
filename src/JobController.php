@@ -181,9 +181,22 @@ class JobController {
         }
         
         // Execute sync in background
-        $phpPath = PHP_BINARY;
         $workerPath = __DIR__ . '/../worker.php';
-        exec("$phpPath $workerPath $newJobId > /dev/null 2>&1 &");
+        $logPath = __DIR__ . '/../data/logs/worker_' . $newJobId . '.log';
+        
+        // Ensure log directory exists
+        $logDir = dirname($logPath);
+        if (!file_exists($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        // Execute worker with error logging using default php command
+        $command = sprintf('php %s %d >> %s 2>&1 &', 
+            escapeshellarg($workerPath), 
+            $newJobId,
+            escapeshellarg($logPath)
+        );
+        exec($command);
         
         return ['success' => true, 'message' => 'Job restarted successfully', 'new_job_id' => $newJobId];
     }

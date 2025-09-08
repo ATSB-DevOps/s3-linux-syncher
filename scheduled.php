@@ -338,7 +338,7 @@ $allSettings = $s3Manager->getSettings();
     <h2>Cron Setup</h2>
     <p>To enable scheduled jobs, add this line to your crontab:</p>
     <pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px;">
-* * * * * <?= PHP_BINARY ?> <?= __DIR__ ?>/cron.php >> <?= __DIR__ ?>/data/logs/cron.log 2>&1
+* * * * * php <?= __DIR__ ?>/cron.php >> <?= __DIR__ ?>/data/logs/cron.log 2>&1
     </pre>
     <p>To edit your crontab, run: <code>crontab -e</code></p>
 </div>
